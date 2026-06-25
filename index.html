@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Progress">
+<meta name="theme-color" content="#111111">
+<title>Cameron — Progress</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<style>
+:root {
+  --bg: #111111;
+  --bg2: #1a1a1a;
+  --bg3: #222222;
+  --bg4: #2a2a2a;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.14);
+  --text: #f0f0f0;
+  --text2: #999;
+  --text3: #666;
+  --green: #4a9b6f;
+  --green-dim: rgba(74,155,111,0.15);
+  --blue: #3d7abf;
+  --blue-dim: rgba(61,122,191,0.15);
+  --amber: #c47f1a;
+  --amber-dim: rgba(196,127,26,0.15);
+  --red: #c44a4a;
+  --red-dim: rgba(196,74,74,0.15);
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-serif;font-size:15px;line-height:1.5;overscroll-behavior:none}
+body{display:flex;flex-direction:column;max-width:480px;margin:0 auto}
+
+/* Header */
+.app-header{padding:calc(var(--safe-top) + 16px) 20px 12px;background:var(--bg);border-bottom:0.5px solid var(--border);position:sticky;top:0;z-index:100;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.header-row{display:flex;align-items:center;justify-content:space-between}
+.app-title{font-size:17px;font-weight:600;letter-spacing:-0.3px}
+.streak-badge{display:flex;align-items:center;gap:5px;background:var(--bg3);border:0.5px solid var(--border2);border-radius:20px;padding:5px 12px;font-size:13px;font-weight:500}
+.streak-badge span{color:var(--green);font-size:15px;font-weight:700}
+
+/* Tab bar */
+.tab-bar{display:flex;background:var(--bg);border-bottom:0.5px solid var(--border);overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding:0 4px}
+.tab-bar::-webkit-scrollbar{display:none}
+.tab-btn{flex:0 0 auto;padding:10px 16px;font-size:13px;font-weight:500;color:var(--text3);border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:color 0.15s}
+.tab-btn.active{color:var(--green);border-bottom-color:var(--green)}
+
+/* Content */
+.content{flex:1;overflow-y:auto;padding:16px 16px calc(var(--safe-bottom) + 16px);-webkit-overflow-scrolling:touch}
+.panel{display:none}.panel.active{display:block}
+
+/* Metric grid */
+.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+.metric-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:14px;padding:14px 14px 12px}
+.metric-label{font-size:11px;color:var(--text3);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:6px}
+.metric-val{font-size:26px;font-weight:700;letter-spacing:-0.5px;line-height:1}
+.metric-sub{font-size:11px;color:var(--text3);margin-top:3px}
+.metric-bar{height:3px;background:var(--border);border-radius:2px;margin-top:10px;overflow:hidden}
+.bar-fill{height:100%;border-radius:2px;transition:width 0.5s ease}
+
+/* Section label */
+.section-label{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);margin:20px 0 10px}
+
+/* Task groups */
+.task-group{background:var(--bg2);border:0.5px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:12px}
+.group-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:0.5px solid var(--border)}
+.group-title{font-size:14px;font-weight:600;display:flex;align-items:center;gap:7px}
+.group-count{font-size:12px;color:var(--text3)}
+.task-item{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:0.5px solid var(--border);cursor:pointer;active:background:var(--bg3);transition:background 0.1s}
+.task-item:last-child{border-bottom:none}
+.task-item:active{background:var(--bg3)}
+.task-item.done .task-text{text-decoration:line-through;color:var(--text3)}
+.checkbox{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--border2);flex-shrink:0;display:flex;align-items:center;justify-content:center;margin-top:1px;transition:all 0.15s}
+.checkbox.checked{background:var(--green);border-color:var(--green)}
+.checkmark{width:11px;height:8px;stroke:white;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.task-text{font-size:14px;line-height:1.45;flex:1;color:var(--text)}
+.task-tag{font-size:11px;padding:3px 8px;border-radius:8px;font-weight:600;flex-shrink:0;margin-top:1px}
+.tag-high{background:var(--red-dim);color:#e06060}
+.tag-med{background:var(--amber-dim);color:#d4944a}
+.tag-low{background:var(--green-dim);color:var(--green)}
+.tag-done{background:var(--bg3);color:var(--text3)}
+
+/* Gym calendar */
+.week-label{font-size:11px;font-weight:600;color:var(--text3);letter-spacing:0.05em;text-transform:uppercase;margin:16px 0 8px}
+.day-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:4px}
+.day-cell{aspect-ratio:1;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;border:0.5px solid var(--border);background:var(--bg2);gap:1px;transition:all 0.1s;-webkit-touch-callout:none;user-select:none}
+.day-cell:active{transform:scale(0.92)}
+.day-cell.trained{background:var(--green);border-color:var(--green)}
+.day-cell.today{border:1.5px solid var(--green)}
+.day-cell .dname{font-size:9px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--text3)}
+.day-cell.trained .dname,.day-cell.trained .dnum{color:white}
+.day-cell.today .dname,.day-cell.today .dnum{color:var(--green)}
+.day-cell.today.trained .dname,.day-cell.today.trained .dnum{color:white}
+.day-cell .dnum{font-size:14px;font-weight:700}
+.gym-legend{display:flex;gap:14px;font-size:12px;color:var(--text3);margin-top:8px}
+.leg-dot{width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:4px;vertical-align:middle}
+
+/* Goals */
+.goal-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:14px;padding:16px;margin-bottom:10px}
+.goal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.goal-title{font-size:14px;font-weight:600;display:flex;align-items:center;gap:7px}
+.goal-icon{width:18px;height:18px;flex-shrink:0}
+.goal-val-row{display:flex;align-items:baseline;gap:8px;margin-bottom:10px}
+.goal-current{font-size:32px;font-weight:700;letter-spacing:-1px;line-height:1}
+.goal-target{font-size:13px;color:var(--text3)}
+.prog-bar{height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:14px}
+.prog-fill{height:100%;border-radius:2px;transition:width 0.5s}
+.input-row{display:flex;gap:8px}
+.input-row input,.input-row select{flex:1;font-size:14px;padding:9px 12px;border-radius:10px;border:0.5px solid var(--border2);background:var(--bg3);color:var(--text);min-width:0;-webkit-appearance:none;appearance:none}
+.input-row input::placeholder{color:var(--text3)}
+.input-row button{font-size:13px;font-weight:600;padding:9px 16px;border-radius:10px;border:none;background:var(--green);color:white;cursor:pointer;white-space:nowrap}
+.input-row button:active{opacity:0.8;transform:scale(0.97)}
+
+/* Reading / Network */
+.list-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:10px}
+.list-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:0.5px solid var(--border)}
+.list-title{font-size:14px;font-weight:600}
+.list-count{font-size:12px;color:var(--text3)}
+.list-item{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:0.5px solid var(--border);cursor:pointer;transition:background 0.1s}
+.list-item:last-child{border-bottom:none}
+.list-item:active{background:var(--bg3)}
+.list-item.done .item-title{text-decoration:line-through;color:var(--text3)}
+.item-title{font-size:14px;flex:1}
+.item-sub{font-size:12px;color:var(--text3)}
+.add-row{display:flex;gap:8px;padding:12px 16px;border-top:0.5px solid var(--border)}
+.add-row input{flex:1;font-size:14px;padding:9px 12px;border-radius:10px;border:0.5px solid var(--border2);background:var(--bg3);color:var(--text);min-width:0}
+.add-row input::placeholder{color:var(--text3)}
+.add-row button{font-size:13px;font-weight:600;padding:9px 16px;border-radius:10px;border:none;background:var(--blue);color:white;cursor:pointer}
+.add-row button:active{opacity:0.8}
+
+/* Diet */
+.diet-legend{display:flex;gap:14px;font-size:12px;color:var(--text3);margin-bottom:10px}
+.diet-cell.clean{background:#1d6fa8;border-color:#1d6fa8}
+.diet-cell.clean .dname,.diet-cell.clean .dnum{color:white}
+.diet-cell.ok{background:#8a5a10;border-color:#8a5a10}
+.diet-cell.ok .dname,.diet-cell.ok .dnum{color:white}
+.diet-cell.bad{background:var(--red-dim);border-color:var(--red)}
+.diet-cell.bad .dname,.diet-cell.bad .dnum{color:#e06060}
+.diet-status{font-size:9px;font-weight:600;letter-spacing:0.02em}
+
+/* GMAT breakdown */
+.gmat-scores{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px}
+.gmat-score-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:12px;padding:12px 10px;text-align:center}
+.gmat-section{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px}
+.gmat-num{font-size:22px;font-weight:700;letter-spacing:-0.5px}
+.gmat-pct{font-size:11px;margin-top:2px;font-weight:600}
+.gmat-pct.great{color:var(--green)}
+.gmat-pct.low{color:var(--red)}
+.tip-card{background:var(--amber-dim);border:0.5px solid rgba(196,127,26,0.3);border-radius:12px;padding:14px 16px;margin-bottom:16px}
+.tip-label{font-size:11px;font-weight:700;color:var(--amber);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:4px}
+.tip-text{font-size:13px;color:var(--text2);line-height:1.5}
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="header-row">
+    <div class="app-title">Cameron — Progress</div>
+    <div class="streak-badge">🔥 <span id="streak-num">0</span> day streak</div>
+  </div>
+</div>
+
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('tasks')">Tasks</button>
+  <button class="tab-btn" onclick="switchTab('gym')">Gym</button>
+  <button class="tab-btn" onclick="switchTab('goals')">Goals</button>
+  <button class="tab-btn" onclick="switchTab('gmat')">GMAT</button>
+  <button class="tab-btn" onclick="switchTab('reading')">Reading</button>
+  <button class="tab-btn" onclick="switchTab('network')">Network</button>
+  <button class="tab-btn" onclick="switchTab('diet')">Diet</button>
+</div>
+
+<div class="content">
+
+  <!-- TASKS -->
+  <div id="panel-tasks" class="panel active">
+    <div class="metric-grid">
+      <div class="metric-card">
+        <div class="metric-label">Tasks done</div>
+        <div class="metric-val" id="m-tasks">0/12</div>
+        <div class="metric-sub">overall</div>
+        <div class="metric-bar"><div class="bar-fill" id="b-tasks" style="width:0%;background:var(--green)"></div></div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">GMAT score</div>
+        <div class="metric-val" id="m-gmat">675</div>
+        <div class="metric-sub">target: 720</div>
+        <div class="metric-bar"><div class="bar-fill" id="b-gmat" style="width:72%;background:var(--blue)"></div></div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Gym this week</div>
+        <div class="metric-val" id="m-gym">0</div>
+        <div class="metric-sub">sessions</div>
+        <div class="metric-bar"><div class="bar-fill" id="b-gym" style="width:0%;background:var(--green)"></div></div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Contacts made</div>
+        <div class="metric-val" id="m-net">0</div>
+        <div class="metric-sub">target: 50</div>
+        <div class="metric-bar"><div class="bar-fill" id="b-net" style="width:0%;background:var(--amber)"></div></div>
+      </div>
+    </div>
+
+    <div class="section-label">🚨 Non-negotiable</div>
+    <div class="task-group" id="g-tier1"></div>
+
+    <div class="section-label">⭐ High value</div>
+    <div class="task-group" id="g-tier2"></div>
+
+    <div class="section-label">📍 Vienna & applications</div>
+    <div class="task-group" id="g-tier3"></div>
+  </div>
+
+  <!-- GYM -->
+  <div id="panel-gym" class="panel">
+    <div class="section-label">This week</div>
+    <div class="day-grid" id="gym-this-week"></div>
+    <div class="gym-legend">
+      <span><span class="leg-dot" style="background:var(--green)"></span>Trained</span>
+      <span><span class="leg-dot" style="border:1.5px solid var(--green);background:transparent"></span>Today</span>
+      <span><span class="leg-dot" style="background:var(--bg3)"></span>Rest</span>
+    </div>
+    <div id="gym-past-weeks"></div>
+  </div>
+
+  <!-- GOALS -->
+  <div id="panel-goals" class="panel">
+    <div class="goal-card">
+      <div class="goal-title">⛳ Golf handicap</div>
+      <div class="goal-val-row">
+        <span class="goal-current" id="g-golf">8.0</span>
+        <span class="goal-target">target: 5</span>
+      </div>
+      <div class="prog-bar"><div class="prog-fill" id="p-golf" style="background:var(--green)"></div></div>
+      <div class="input-row">
+        <input type="number" id="i-golf" placeholder="New handicap" min="0" max="28" step="0.1">
+        <button onclick="updateGoal('golf')">Save</button>
+      </div>
+    </div>
+
+    <div class="goal-card">
+      <div class="goal-title">🇩🇪 German level</div>
+      <div class="goal-val-row">
+        <span class="goal-current" id="g-german">A1</span>
+        <span class="goal-target">target: B1</span>
+      </div>
+      <div class="prog-bar"><div class="prog-fill" id="p-german" style="background:var(--blue)"></div></div>
+      <div class="input-row">
+        <select id="i-german">
+          <option value="A1">A1 — Beginner</option>
+          <option value="A2">A2 — Elementary</option>
+          <option value="B1">B1 — Intermediate</option>
+          <option value="B2">B2 — Upper intermediate</option>
+          <option value="C1">C1 — Advanced</option>
+        </select>
+        <button onclick="updateGoal('german')">Save</button>
+      </div>
+    </div>
+
+    <div class="goal-card">
+      <div class="goal-title">📊 GMAT score</div>
+      <div class="goal-val-row">
+        <span class="goal-current" id="g-gmat">675</span>
+        <span class="goal-target">target: 720</span>
+      </div>
+      <div class="prog-bar"><div class="prog-fill" id="p-gmat" style="background:var(--amber)"></div></div>
+      <div class="input-row">
+        <input type="number" id="i-gmat" placeholder="Latest score" min="200" max="805">
+        <button onclick="updateGoal('gmat')">Save</button>
+      </div>
+    </div>
+
+    <div class="goal-card">
+      <div class="goal-title">🤝 Contacts made</div>
+      <div class="goal-val-row">
+        <span class="goal-current" id="g-contacts">0</span>
+        <span class="goal-target">target: 50</span>
+      </div>
+      <div class="prog-bar"><div class="prog-fill" id="p-contacts" style="background:var(--red)"></div></div>
+      <div class="input-row">
+        <input type="number" id="i-contacts" placeholder="Total contacts" min="0">
+        <button onclick="updateGoal('contacts')">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GMAT -->
+  <div id="panel-gmat" class="panel">
+    <div class="section-label">Latest scores</div>
+    <div class="gmat-scores">
+      <div class="gmat-score-card">
+        <div class="gmat-section">Data Insights</div>
+        <div class="gmat-num" id="gmat-di">76</div>
+        <div class="gmat-pct low" id="gmat-di-pct">58th %ile</div>
+      </div>
+      <div class="gmat-score-card">
+        <div class="gmat-section">Quant</div>
+        <div class="gmat-num" id="gmat-q">89</div>
+        <div class="gmat-pct great" id="gmat-q-pct">99th %ile</div>
+      </div>
+      <div class="gmat-score-card">
+        <div class="gmat-section">Verbal</div>
+        <div class="gmat-num" id="gmat-v">87</div>
+        <div class="gmat-pct great" id="gmat-v-pct">99th %ile</div>
+      </div>
+    </div>
+
+    <div class="tip-card">
+      <div class="tip-label">⚡ Your weak spot</div>
+      <div class="tip-text">Quant (99th) and Verbal (99th) are exceptional. Data Insights at 58th percentile is your entire gap to 720+. Focus all prep here: multi-source reasoning, table analysis, and data sufficiency. One section, fixable in weeks.</div>
+    </div>
+
+    <div class="section-label">Update section scores</div>
+    <div class="goal-card">
+      <div style="display:grid;gap:10px">
+        <div class="input-row">
+          <input type="number" id="i-di" placeholder="Data Insights score" min="60" max="90">
+          <button onclick="updateGMAT('di')">DI</button>
+        </div>
+        <div class="input-row">
+          <input type="number" id="i-q" placeholder="Quant score" min="60" max="90">
+          <button onclick="updateGMAT('q')">Quant</button>
+        </div>
+        <div class="input-row">
+          <input type="number" id="i-v" placeholder="Verbal score" min="60" max="90">
+          <button onclick="updateGMAT('v')">Verbal</button>
+        </div>
+        <div class="input-row">
+          <input type="number" id="i-total" placeholder="Total score" min="200" max="805">
+          <button onclick="updateGMAT('total')">Total</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- READING -->
+  <div id="panel-reading" class="panel">
+    <div class="list-card">
+      <div class="list-header">
+        <div class="list-title">Reading list</div>
+        <div class="list-count" id="read-count">0 read</div>
+      </div>
+      <div id="reading-items"></div>
+      <div class="add-row">
+        <input type="text" id="i-book" placeholder="Add a book...">
+        <button onclick="addBook()">Add</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- NETWORK -->
+  <div id="panel-network" class="panel">
+    <div class="list-card">
+      <div class="list-header">
+        <div class="list-title">Cold outreach tracker</div>
+        <div class="list-count" id="net-count">0 contacted</div>
+      </div>
+      <div id="network-items"></div>
+      <div class="add-row">
+        <input type="text" id="i-contact" placeholder="Name / firm...">
+        <button onclick="addContact()">Add</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DIET -->
+  <div id="panel-diet" class="panel">
+    <div class="diet-legend">
+      <span><span class="leg-dot" style="background:#1d6fa8"></span>Clean</span>
+      <span><span class="leg-dot" style="background:#8a5a10"></span>Okay</span>
+      <span><span class="leg-dot" style="background:var(--red-dim);border:0.5px solid var(--red)"></span>Off-track</span>
+      <span><span class="leg-dot" style="background:var(--bg3)"></span>Tap to set</span>
+    </div>
+    <div class="section-label">This week</div>
+    <div class="day-grid" id="diet-this-week"></div>
+    <div id="diet-past-weeks"></div>
+  </div>
+
+</div>
+
+<script>
+const DAYS_SHORT = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const GERMAN_PCT = {A1:15,A2:35,B1:60,B2:80,C1:95};
+const DIET_CYCLE = ['clean','ok','bad',null];
+const DIET_LABEL = {clean:'Clean',ok:'OK',bad:'Bad'};
+
+const DEFAULT_STATE = {
+  tasks:[
+    {id:'t1',text:'Ask uncle about PE internship',tier:1,done:false,tag:'high'},
+    {id:'t2',text:'GMAT prep — 1.5hrs daily minimum',tier:1,done:false,tag:'high'},
+    {id:'t3',text:'Buy BIWS LBO modelling course',tier:1,done:false,tag:'high'},
+    {id:'t4',text:'Complete LBO & DCF modelling modules',tier:1,done:false,tag:'high'},
+    {id:'t5',text:'Cold email 50 boutique finance firms',tier:1,done:false,tag:'high'},
+    {id:'t6',text:'Advanced Excel — WSP crash course',tier:2,done:false,tag:'med'},
+    {id:'t7',text:'Python for Finance — Coursera',tier:2,done:false,tag:'med'},
+    {id:'t8',text:'CFA Level 1 — register as candidate',tier:2,done:false,tag:'med'},
+    {id:'t9',text:'Read Rosenbaum & Pearl cover to cover',tier:2,done:false,tag:'med'},
+    {id:'t10',text:'SQL basics — SQLZoo',tier:2,done:false,tag:'low'},
+    {id:'t11',text:'Apply to grad programmes (opens Oct)',tier:3,done:false,tag:'med'},
+    {id:'t12',text:'MSc apps — UCL, Imperial, Warwick',tier:3,done:false,tag:'high'},
+  ],
+  gym:{},
+  diet:{},
+  golf:8.0,
+  german:'A1',
+  gmat:675,
+  contacts:0,
+  gmat_di:76,gmat_q:89,gmat_v:87,
+  books:[
+    {id:'b1',title:'Investment Banking',author:'Rosenbaum & Pearl',done:false},
+    {id:'b2',title:'The Intelligent Investor',author:'Benjamin Graham',done:false},
+    {id:'b3',title:'Barbarians at the Gate',author:'Burrough & Helyar',done:false},
+    {id:'b4',title:'Liar\'s Poker',author:'Michael Lewis',done:false},
+  ],
+  network:[],
+};
+
+let S = JSON.parse(JSON.stringify(DEFAULT_STATE));
+
+function save(){try{localStorage.setItem('cam_v2',JSON.stringify(S));}catch(e){}}
+function load(){try{const d=localStorage.getItem('cam_v2');if(d){const p=JSON.parse(d);S=Object.assign(JSON.parse(JSON.stringify(DEFAULT_STATE)),p);}}catch(e){}}
+
+function todayStr(){return new Date().toISOString().slice(0,10);}
+function weekDates(offsetWeeks=0){
+  const now=new Date();const day=now.getDay();
+  const mon=new Date(now);mon.setDate(now.getDate()-(day===0?6:day-1)-offsetWeeks*7);
+  return Array.from({length:7},(_,i)=>{const d=new Date(mon);d.setDate(mon.getDate()+i);return d.toISOString().slice(0,10);});
+}
+function dayNum(dateStr){return parseInt(dateStr.slice(8));}
+
+function calcStreak(){
+  let s=0;const today=new Date();
+  for(let i=0;i<365;i++){
+    const d=new Date(today);d.setDate(today.getDate()-i);
+    const k=d.toISOString().slice(0,10);
+    if(S.gym[k]||S.diet[k]){s++;}else if(i>0){break;}
+  }
+  return s;
+}
+
+function switchTab(name){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  const tabs=['tasks','gym','goals','gmat','reading','network','diet'];
+  document.querySelectorAll('.tab-btn')[tabs.indexOf(name)].classList.add('active');
+  document.getElementById('panel-'+name).classList.add('active');
+}
+
+function chk(done){
+  return `<div class="checkbox${done?' checked'}">${done?`<svg viewBox="0 0 12 9" class="checkmark"><polyline points="1,5 4,8 11,1"/></svg>`:''}</div>`;
+}
+
+function renderTasks(){
+  [1,2,3].forEach(tier=>{
+    const items=S.tasks.filter(t=>t.tier===tier);
+    const done=items.filter(t=>t.done).length;
+    const el=document.getElementById('g-tier'+tier);
+    el.innerHTML=`<div class="group-header"><span class="group-title">Tier ${tier}</span><span class="group-count">${done}/${items.length}</span></div>`
+      +items.map(t=>`<div class="task-item${t.done?' done':''}" onclick="toggleTask('${t.id}')">${chk(t.done)}<span class="task-text">${t.text}</span><span class="task-tag ${t.done?'tag-done':'tag-'+t.tag}">${t.done?'done':t.tag}</span></div>`).join('');
+  });
+  const done=S.tasks.filter(t=>t.done).length,total=S.tasks.length;
+  document.getElementById('m-tasks').textContent=done+'/'+total;
+  document.getElementById('b-tasks').style.width=Math.round(done/total*100)+'%';
+}
+function toggleTask(id){const t=S.tasks.find(x=>x.id===id);if(t){t.done=!t.done;save();renderTasks();}}
+
+function renderGymWeek(dates,container,label){
+  const today=todayStr();
+  let html=`<div class="week-label">${label}</div><div class="day-grid">`;
+  dates.forEach((k,i)=>{
+    const trained=!!S.gym[k];const isToday=k===today;
+    html+=`<div class="day-cell${trained?' trained':''}${isToday&&!trained?' today':''}" onclick="toggleGym('${k}')"><span class="dname">${DAYS_SHORT[i]}</span><span class="dnum">${dayNum(k)}</span></div>`;
+  });
+  html+='</div>';
+  if(container==='append'){return html;}
+  document.getElementById(container).innerHTML=html;
+}
+function renderGym(){
+  const wk=weekDates(0);
+  renderGymWeek(wk,'gym-this-week','This week');
+  let html='';
+  for(let w=1;w<=3;w++){
+    const label=w===1?'Last week':w===2?'2 weeks ago':'3 weeks ago';
+    html+=renderGymWeek(weekDates(w),null,label);
+  }
+  document.getElementById('gym-past-weeks').innerHTML=html;
+  const cnt=wk.filter(k=>!!S.gym[k]).length;
+  document.getElementById('m-gym').textContent=cnt;
+  document.getElementById('b-gym').style.width=Math.round(cnt/5*100)+'%';
+}
+function toggleGym(k){S.gym[k]=!S.gym[k];if(!S.gym[k])delete S.gym[k];save();renderGym();updateStreak();}
+
+function renderGoals(){
+  document.getElementById('g-golf').textContent=parseFloat(S.golf).toFixed(1);
+  const golfPct=Math.max(0,Math.min(100,Math.round((8-S.golf)/(8-5)*100)));
+  document.getElementById('p-golf').style.width=golfPct+'%';
+  document.getElementById('g-german').textContent=S.german;
+  document.getElementById('p-german').style.width=(GERMAN_PCT[S.german]||15)+'%';
+  document.getElementById('g-gmat').textContent=S.gmat;
+  document.getElementById('m-gmat').textContent=S.gmat;
+  const gmatPct=Math.round(Math.max(0,Math.min(100,(S.gmat-600)/(805-600)*100)));
+  document.getElementById('p-gmat').style.width=gmatPct+'%';
+  document.getElementById('b-gmat').style.width=gmatPct+'%';
+  document.getElementById('g-contacts').textContent=S.contacts;
+  document.getElementById('m-net').textContent=S.contacts;
+  const netPct=Math.round(Math.min(100,S.contacts/50*100));
+  document.getElementById('p-contacts').style.width=netPct+'%';
+  document.getElementById('b-net').style.width=netPct+'%';
+}
+function updateGoal(type){
+  if(type==='golf'){const v=parseFloat(document.getElementById('i-golf').value);if(!isNaN(v)&&v>=0&&v<=28){S.golf=v;document.getElementById('i-golf').value='';}}
+  if(type==='german'){S.german=document.getElementById('i-german').value;}
+  if(type==='gmat'){const v=parseInt(document.getElementById('i-gmat').value);if(!isNaN(v)&&v>=200&&v<=805){S.gmat=v;document.getElementById('i-gmat').value='';}}
+  if(type==='contacts'){const v=parseInt(document.getElementById('i-contacts').value);if(!isNaN(v)&&v>=0){S.contacts=v;document.getElementById('i-contacts').value='';}}
+  save();renderGoals();
+}
+
+function renderGMAT(){
+  document.getElementById('gmat-di').textContent=S.gmat_di;
+  document.getElementById('gmat-q').textContent=S.gmat_q;
+  document.getElementById('gmat-v').textContent=S.gmat_v;
+}
+function updateGMAT(section){
+  if(section==='di'){const v=parseInt(document.getElementById('i-di').value);if(!isNaN(v)){S.gmat_di=v;document.getElementById('i-di').value='';}}
+  if(section==='q'){const v=parseInt(document.getElementById('i-q').value);if(!isNaN(v)){S.gmat_q=v;document.getElementById('i-q').value='';}}
+  if(section==='v'){const v=parseInt(document.getElementById('i-v').value);if(!isNaN(v)){S.gmat_v=v;document.getElementById('i-v').value='';}}
+  if(section==='total'){const v=parseInt(document.getElementById('i-total').value);if(!isNaN(v)&&v>=200&&v<=805){S.gmat=v;document.getElementById('i-total').value='';renderGoals();}}
+  save();renderGMAT();
+}
+
+function renderReading(){
+  document.getElementById('reading-items').innerHTML=S.books.map(b=>`<div class="list-item${b.done?' done':''}" onclick="toggleBook('${b.id}')">${chk(b.done)}<div><div class="item-title">${b.title}</div><div class="item-sub">${b.author}</div></div></div>`).join('');
+  document.getElementById('read-count').textContent=S.books.filter(b=>b.done).length+' read';
+}
+function toggleBook(id){const b=S.books.find(x=>x.id===id);if(b){b.done=!b.done;save();renderReading();}}
+function addBook(){const v=document.getElementById('i-book').value.trim();if(v){S.books.push({id:'b'+Date.now(),title:v,author:'',done:false});save();renderReading();document.getElementById('i-book').value='';}}
+
+function renderNetwork(){
+  document.getElementById('network-items').innerHTML=S.network.map(n=>`<div class="list-item${n.done?' done':''}" onclick="toggleContact('${n.id}')">${chk(n.done)}<div class="item-title">${n.name}</div></div>`).join('');
+  document.getElementById('net-count').textContent=S.network.filter(n=>n.done).length+' contacted';
+}
+function toggleContact(id){const n=S.network.find(x=>x.id===id);if(n){n.done=!n.done;save();renderNetwork();}}
+function addContact(){const v=document.getElementById('i-contact').value.trim();if(v){S.network.push({id:'n'+Date.now(),name:v,done:false});save();renderNetwork();document.getElementById('i-contact').value='';}}
+
+function renderDietWeek(dates,container,label){
+  const today=todayStr();
+  let html=`<div class="week-label">${label}</div><div class="day-grid">`;
+  dates.forEach((k,i)=>{
+    const s=S.diet[k]||null;const isToday=k===today;
+    html+=`<div class="day-cell diet-cell${s?' '+s:''}${isToday&&!s?' today':''}" onclick="cycleDiet('${k}')"><span class="dname">${DAYS_SHORT[i]}</span><span class="dnum">${dayNum(k)}</span>${s?`<span class="diet-status">${DIET_LABEL[s]}</span>`:''}</div>`;
+  });
+  html+='</div>';
+  if(container==='append'){return html;}
+  document.getElementById(container).innerHTML=html;
+}
+function renderDiet(){
+  const wk=weekDates(0);
+  renderDietWeek(wk,'diet-this-week','This week');
+  let html='';
+  for(let w=1;w<=3;w++){
+    const label=w===1?'Last week':w===2?'2 weeks ago':'3 weeks ago';
+    html+=renderDietWeek(weekDates(w),null,label);
+  }
+  document.getElementById('diet-past-weeks').innerHTML=html;
+}
+function cycleDiet(k){
+  const cur=S.diet[k]||null;
+  const idx=DIET_CYCLE.indexOf(cur);
+  const next=DIET_CYCLE[(idx+1)%DIET_CYCLE.length];
+  if(next===null){delete S.diet[k];}else{S.diet[k]=next;}
+  save();renderDiet();updateStreak();
+}
+
+function updateStreak(){
+  const s=calcStreak();
+  document.getElementById('streak-num').textContent=s;
+}
+
+function init(){
+  load();
+  renderTasks();renderGym();renderGoals();renderGMAT();renderReading();renderNetwork();renderDiet();
+  updateStreak();
+}
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+
+init();
+</script>
+</body>
+</html>
